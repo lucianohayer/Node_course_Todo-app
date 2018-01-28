@@ -1,6 +1,7 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var {ObjectID} = require('mongodb');
+const _ = require('lodash');
+const express = require('express');
+const bodyParser = require('body-parser');
+const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
@@ -60,14 +61,14 @@ app.delete('/todos/:id', (req,res) => {
     var id = req.params.id
     //validate the id --> not valid 404
     if(!ObjectID.isValid(id)){
-      res.status(404).send();
+      return res.status(404).send();
     }
     //remove todo by id
     Todo.findByIdAndRemove(id).then((todo) => {
       //succes
       if(!todo){
         //if no doc, send 404
-        res.status(404).send();
+        return res.status(404).send();
       }
       //if doc, send back with 200
       res.send({todo});
@@ -75,6 +76,32 @@ app.delete('/todos/:id', (req,res) => {
       //error --> 400 empty body
       res.status(400).send();
     });
+});
+
+app.patch('/todos/:id', (req,res) => {
+  var id = req.params.id;
+
+  if(!ObjectID.isValid(id)){
+    return res.status(404).send();
+  }
+
+  var body = _.pick(req.body, ['text', 'completed']);
+  if(_.isBoolean(body.completed) && body.completed){
+    body.completedAt = new Date().getTime();
+  } else {
+    body.completed = false;
+    body.completedAt = null
+  }
+
+  Todo.findOneAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+    if(!todo){
+      res.status(404).send();
+    }
+
+    res.send({todo});
+  }).catch((e) => {
+    res.status(400).send();
+  })
 });
 
 app.listen(port, () => {
