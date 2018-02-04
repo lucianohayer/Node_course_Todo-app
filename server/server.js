@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
+
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
@@ -115,7 +116,7 @@ app.post('/users', (req, res) => {
   user.save().then((user) => {
     return user.generateAuthToken();
   }).then((token) => {
-    res.header('x-auth', token).send(user)
+    res.header('x-auth', token).send(user);
   }).catch((e) => {
     res.status(400).send(e);
   });
@@ -126,6 +127,33 @@ app.post('/users', (req, res) => {
 
 app.get('/users/me', authenticate, (req, res) => {
   res.send(req.user);
+});
+
+app.post('/users/login', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password']);
+
+  User.findByCredentials(body.email, body.password).then((user) => {
+    return user.generateAuthToken().then((token) => {
+      res.header('x-auth', token).send(user);
+    })
+  }).catch((e) => {
+    res.status(400).send();
+  });
+
+  // User.findOne({body.email}).then((user) => {
+  //   bcrypt.compare(body.password, user.password, (err, response) => {
+  //     if (err) {
+  //       return res.status(400).send();
+  //     }
+  //
+  //     if (!response) {
+  //       return res.status(401).send();
+  //     }
+  //     return res.status(200).send(user.toJSON(user));
+  //   })
+  // }).catch((e) => {
+  //   return res.status(400).send();
+  // })
 });
 
 
