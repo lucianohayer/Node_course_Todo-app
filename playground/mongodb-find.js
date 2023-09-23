@@ -1,30 +1,50 @@
 // const MongoClient = require('mongodb').MongoClient;
-const {MongoClient, ObjectID} = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 
-MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => {
-  if (err) {
-    return console.log('Unable to connect to MongoDB server');
-  }
-  console.log('Connected to MongoDB server');
+const dbConnectionUri = 'mongodb://localhost:27017';
+const dbName = 'TodoApp';
+const client = new MongoClient(dbConnectionUri);
 
-  // db.collection('Todos').find({
-  //   _id: new ObjectID('57bb36afb3b6a3801d8c479d')
-  // }).toArray().then((docs) => {
-  //   console.log('Todos');
-  //   console.log(JSON.stringify(docs, undefined, 2));
-  // }, (err) => {
-  //   console.log('Unable to fetch todos', err);
-  // });
+async function connect() {
+	await client.connect();
 
-  // db.collection('Todos').find().count().then((count) => {
-  //   console.log(`Todos count: ${count}`);
-  // }, (err) => {
-  //   console.log('Unable to fetch todos', err);
-  // });
+	console.log('Connected successfully to server');
 
-  db.collection('Users').find({name: 'Andrew'}).toArray().then((docs) => {
-    console.log(JSON.stringify(docs, undefined, 2));
-  });
+	const db = client.db(dbName);
+	const collection = db.collection('Todos');
+	const userCollection = db.collection('Users');
 
-  // db.close();
-});
+	try {
+		const todo = await collection
+			.find({
+				_id: new ObjectId('57bb36afb3b6a3801d8c479d'),
+			})
+			.toArray();
+		console.log('Todo found');
+		console.log(JSON.stringify(todo, undefined, 2));
+	} catch (error) {
+		console.log('Unable to fetch todos', err);
+	}
+
+	try {
+		const count = await collection.estimatedDocumentCount();
+		console.log(`Todos count: ${count}`);
+	} catch (error) {
+		console.log('Unable to fetch todos', err);
+	}
+
+	try {
+		const user = await userCollection.find({ name: 'Andrew' }).toArray();
+		console.log('User found');
+		console.log(JSON.stringify(user, undefined, 2));
+	} catch (error) {
+		console.log('Unable to fetch todos', err);
+	}
+
+	return 'done.';
+}
+
+connect()
+	.then(console.log)
+	.catch(console.error)
+	.finally(() => client.close());

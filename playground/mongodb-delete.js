@@ -1,34 +1,63 @@
 // const MongoClient = require('mongodb').MongoClient;
-const {MongoClient, ObjectID} = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 
-MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => {
-  if (err) {
-    return console.log('Unable to connect to MongoDB server');
-  }
-  console.log('Connected to MongoDB server');
+const dbConnectionUri = 'mongodb://localhost:27017';
+const dbName = 'TodoApp';
+const client = new MongoClient(dbConnectionUri);
 
-  // deleteMany
-  // db.collection('Todos').deleteMany({text: 'Eat lunch'}).then((result) => {
-  //   console.log(result);
-  // });
+async function connect() {
+	await client.connect();
 
-  // deleteOne
-  // db.collection('Todos').deleteOne({text: 'Eat lunch'}).then((result) => {
-  //   console.log(result);
-  // });
+	console.log('Connected successfully to server');
 
-  // findOneAndDelete
-  // db.collection('Todos').findOneAndDelete({completed: false}).then((result) => {
-  //   console.log(result);
-  // });
+	const db = client.db(dbName);
+	const collection = db.collection('Todos');
+	const userCollection = db.collection('Users');
 
-  // db.collection('Users').deleteMany({name: 'Andrew'});
+	// deleteMany
+	try {
+		const result = await collection.deleteMany({ text: 'Eat lunch' });
+		console.log(result);
+	} catch (error) {
+		console.error(error);
+	}
 
-  db.collection('Users').findOneAndDelete({
-    _id: new ObjectID("57ac8d47878a299e5dc21bc8")
-  }).then((results) => {
-    console.log(JSON.stringify(results, undefined, 2));
-  });
+	// deleteOne
+	try {
+		const result = await collection.deleteOne({ text: 'Eat lunch' });
+		console.log(JSON.stringify(result, undefined, 2));
+	} catch (error) {
+		console.error(error);
+	}
 
-  // db.close();
-});
+	// findOneAndDelete
+	try {
+		const result = await collection.findOneAndDelete({ completed: false });
+		console.log(JSON.stringify(result, undefined, 2));
+	} catch (error) {
+		console.error(error);
+	}
+
+	try {
+		const result = await userCollection.deleteMany({ name: 'Andrew' });
+		console.log(JSON.stringify(result, undefined, 2));
+	} catch (error) {
+		console.error(error);
+	}
+
+	try {
+		const result = await userCollection.findOneAndDelete({
+			_id: new ObjectId('57ac8d47878a299e5dc21bc8'),
+		});
+		console.log(JSON.stringify(result, undefined, 2));
+	} catch (error) {
+		console.error(error);
+	}
+
+	return 'done.';
+}
+
+connect()
+	.then(console.log)
+	.catch(console.error)
+	.finally(() => client.close());
